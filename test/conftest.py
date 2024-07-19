@@ -1,5 +1,5 @@
+import logging
 import os
-
 import allure
 import pytest
 
@@ -13,36 +13,40 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RES_DIR = os.path.join(BASE_DIR, "resources")
 
 
-static_driver = None
-
-
 @pytest.fixture()
 def driver():
-    browser_version = "100"
-    options = Options()
+    """
+    The fixture that our tests call to get access to a driver.
+    """
+
+    # This is needed to tell selenoid that we want it to
+    # record videos
     selenoid_capabilities = {
         "browserName": "chrome",
-        "browserVersion": browser_version,
+        "browserVersion": "125",
         "selenoid:options": {
             "enableVNC": True,
             "enableVideo": True
         }
     }
+
+    options = Options()
     options.capabilities.update(selenoid_capabilities)
 
+    # Here, we create a driver that is going to use selenoid instead of
+    # a local browser
     driver = webdriver.Remote(
-        command_executor=f"https://user1:1234@selenoid.autotests.cloud/wd/hub",
+        command_executor=f"http://192.168.1.11:4444/wd/hub",
         options=options
     )
 
-    global static_driver
-    static_driver = driver
+  #  driver = webdriver.Chrome()
 
     yield driver
 
     driver.quit()
 
-
+"""
 def pytest_addoption(parser):
     parser.addoption(
         "--browser",
@@ -53,30 +57,29 @@ def pytest_addoption(parser):
     parser.addoption(
         "--browser_version",
         help="Browser version",
-        default="100.0"
+        default="125.0"
     )
+"""
 
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_exception_interact(node, call, report):
     web_driver = None
     for fixture_name in node.fixturenames:
-        fixture = node.funcargs[fixture_name]
-        if isinstance(fixture, WebDriver):
-            web_driver = fixture
-            break
+        if fixture_name in node.funcargs.keys():
+            fixture = node.funcargs[fixture_name]
+            if isinstance(fixture, webdriver.Remote):
+                web_driver = fixture
+                break
 
-    if not web_driver:
-       yield
+    if web_driver:
+        attach_video(web_driver)
 
-    global static_driver
-    attach_video(static_driver)
-
-   # web_driver.get_screenshot_as_file("/home/rattus-aristarchus/code/python/stackoverflow/generic_report/screenshots/on_failure.png")
+    yield
 
 
 def attach_video(driver):
-    video_url = "https://selenoid.autotests.cloud/video/" + driver.session_id + ".mp4"
+    video_url = "http://192.168.1.11:4444/video/" + driver.session_id + ".mp4"
     html = "<html><body><video width='100%' height='100%' controls autoplay><source src='" \
            + video_url \
            + "' type='video/mp4'></video></body></html>"

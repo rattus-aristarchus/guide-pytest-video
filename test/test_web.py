@@ -13,8 +13,7 @@ def test_main_page_title_should_have_word_in_title(driver):
         driver.get("https://en.wikipedia.org/wiki/Software_testing")
 
     with allure.step("Look for a phrase in the title"):
-        conftest.attach_video(conftest.static_driver)
-        assert "Software testing" in driver.title
+        assert "Bad search" in driver.title
 
 
 @allure.severity(severity_level=Severity.CRITICAL)
@@ -27,4 +26,5 @@ def test_main_page_should_have_text_entry(driver):
 
     with allure.step("Find an element on the page"):
         elem = driver.find_element(By.ID, "searchInput")
+      #  conftest.attach_video(driver)
         assert elem is not None
