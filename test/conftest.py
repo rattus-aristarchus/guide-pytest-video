@@ -12,6 +12,7 @@ from selenium.webdriver.chrome.options import Options
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RES_DIR = os.path.join(BASE_DIR, "resources")
 
+SELENOID_URL = "https://your.selenoid.URL"
 
 @pytest.fixture()
 def driver():
@@ -36,7 +37,7 @@ def driver():
     # Here, we create a driver that is going to use selenoid instead of
     # a local browser
     driver = webdriver.Remote(
-        command_executor=f"http://192.168.1.11:4444/wd/hub",
+        command_executor=f"{SELENOID_URL}/wd/hub",
         options=options
     )
 
@@ -45,21 +46,6 @@ def driver():
     yield driver
 
     driver.quit()
-
-"""
-def pytest_addoption(parser):
-    parser.addoption(
-        "--browser",
-        help="Browser for running tests",
-        choices=["firefox", "chrome"],
-        default="chrome"
-    )
-    parser.addoption(
-        "--browser_version",
-        help="Browser version",
-        default="125.0"
-    )
-"""
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -79,7 +65,7 @@ def pytest_exception_interact(node, call, report):
 
 
 def attach_video(driver):
-    video_url = "http://192.168.1.11:4444/video/" + driver.session_id + ".mp4"
+    video_url = f"{SELENOID_URL}/video/" + driver.session_id + ".mp4"
     html = "<html><body><video width='100%' height='100%' controls autoplay><source src='" \
            + video_url \
            + "' type='video/mp4'></video></body></html>"
